@@ -1,0 +1,3 @@
+<template>
+    <CardsDashboardCourtStatus/>
+</template>
