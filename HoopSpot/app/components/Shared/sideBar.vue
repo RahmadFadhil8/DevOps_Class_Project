@@ -2,7 +2,7 @@
     <div class="flex flex-col justify-between h-screen items-center pt-6 border-r border-gray-300 w-fit bg-white">
         <div class="px-4">
             <div class="mb-10 pl-4">
-                <img src="~/assets/images/navbar.png" alt="logo" class="h-12">
+                <img src="~/assets/images/logo3.png" alt="logo" class="h-12">
                 <p class="text-sm text-gray-500 mt-2">Admin Console</p>
             </div>
             <ul class="space-y-2">

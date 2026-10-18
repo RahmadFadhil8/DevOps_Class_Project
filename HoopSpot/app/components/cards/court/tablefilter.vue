@@ -15,7 +15,7 @@
                 <div>
                     <label>Tanggal</label>
                     <UiInput
-                    v-model="Date"
+                    v-model="date"
                     type="Date"
                     placeholder="mm/dd/yyyy"
                     :icon="Calendar"
@@ -57,8 +57,8 @@ import Calendar from '~/assets/icon/calendar.svg'
 import money from '~/assets/icon/money.svg'
 import basketball from '~/assets/icon/basketball.svg'
 const text = ref('')
-const Date = ref('')
-const Harga = ref('Pending')
+const date = ref('')
+const Harga = ref('Semua Harga')
 const statusLapangan = ref('Semua Tipe')
 
 const HargaOptions = [

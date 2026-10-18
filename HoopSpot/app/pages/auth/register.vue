@@ -64,12 +64,36 @@
             </div>
 
             <div class="flex gap-2 mb-6">
-              <input type="checkbox" name="Syarat" id="">
-              <p class="text-sm">Saya menyetujui <span class="text-secondary font-semibold">Syarat dan Ketentuan </span>serta <span class="text-secondary font-semibold">Kebijakan Privasi</span> Padel.</p>
+              <input
+                id="terms"
+                v-model="termsAccepted"
+                type="checkbox"
+                name="terms"
+                class="mt-1"
+              >
+
+              <label for="terms" class="text-sm">
+                Saya menyetujui
+                <span class="text-secondary font-semibold">
+                  Syarat dan Ketentuan
+                </span>
+                serta
+                <span class="text-secondary font-semibold">
+                  Kebijakan Privasi
+                </span>
+                Padel.
+              </label>
             </div>
 
             <!-- tombol masuk -->
-            <UiButton full class="mb-4 cursor-pointer" @click="handleRegister">Daftar Sekarang</UiButton>
+            <UiButton
+              full
+              class="mb-4 cursor-pointer"
+              :disabled="isLoading"
+              @click="handleRegister"
+            >
+              {{ isLoading ? 'Memproses...' : 'Daftar Sekarang' }}
+            </UiButton>
 
             <!-- devider -->
             <div class="flex items-center gap-3 mb-4">
@@ -93,42 +117,55 @@
   </section>
 </template>
 
+
 <script setup lang="ts">
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
 })
 
+import { reactive, ref } from 'vue'
 import emailIcon from '~/assets/icon/email-hitam.svg'
 import passIcon from '~/assets/icon/eye.svg'
 import namaIcon from '~/assets/icon/user.svg'
 import telIcon from '~/assets/icon/phoneHitam.svg'
-// import { useAuth } from '~/composables/useAuth'
 import type { RegisterDto } from '~/types/auth'
 
 const { register } = useAuth()
-
-const email = ref('')
-const password = ref('')
-const nama = ref('')
-const tel = ref('')
 
 const form = reactive<RegisterDto>({
   nama: '',
   email: '',
   tel: '',
-  password: ''
+  password: '',
 })
 
+const termsAccepted = ref(false)
+const isLoading = ref(false)
+
 const handleRegister = async () => {
+  if (isLoading.value) return
+
+  if (!termsAccepted.value) {
+    alert('Silakan setujui syarat dan ketentuan terlebih dahulu.')
+    return
+  }
+
+  isLoading.value = true
+
   try {
-    // 1. Jalankan registrasi
     await register(form)
-    
-    // 2. Jika baris di atas berhasil (tidak ada error), langsung arahkan ke halaman login
+
+    alert('Registrasi berhasil! Silakan login.')
     await navigateTo('/auth/login')
-  } catch (error: any) {
-    // 3. Jika gagal, pesan error dari backend akan ditangkap di sini
-    alert(error?.data?.message || error?.message || 'Gagal mendaftar, silakan coba lagi.')
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Gagal mendaftar, silakan coba lagi.'
+
+    alert(message)
+  } finally {
+    isLoading.value = false
   }
 }
 </script>

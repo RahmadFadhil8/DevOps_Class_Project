@@ -48,7 +48,14 @@
             </div>
 
             <!-- tombol masuk -->
-            <UiButton full class="mb-4">Masuk</UiButton>
+            <UiButton
+              full
+              class="mb-4"
+              :disabled="isLoading"
+              @click="handleLogin"
+            >
+              {{ isLoading ? 'Memproses...' : 'Masuk' }}
+            </UiButton>
 
             <!-- devider -->
             <div class="flex items-center gap-3 mb-4">
@@ -72,14 +79,43 @@
   </section>
 </template>
 
+
 <script setup lang="ts">
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
 })
 
+import { ref } from 'vue'
 import emailIcon from '~/assets/icon/email-hitam.svg'
 import passIcon from '~/assets/icon/eye.svg'
 
+const { login } = useAuth()
+
 const email = ref('')
 const password = ref('')
+const isLoading = ref(false)
+
+const handleLogin = async () => {
+  if (isLoading.value) return
+
+  isLoading.value = true
+
+  try {
+    await login({
+      email: email.value,
+      password: password.value,
+    })
+
+    await navigateTo('/profile')
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : 'Gagal login, silakan coba lagi.'
+
+    alert(message)
+  } finally {
+    isLoading.value = false
+  }
+}
 </script>
