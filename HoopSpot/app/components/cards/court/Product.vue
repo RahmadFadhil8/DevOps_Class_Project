@@ -7,7 +7,7 @@
                         <p class="font-bold">{{ lapangan.judul }}</p>
                         <div class="flex gap-1 items-center text-gray-400 text-sm font-bold">
                             <img src="~/assets/icon/star.svg" alt="" class="h-4 w-4">
-                            <p class="">{{ lapangan.rating }}</p>
+                            <p class="">{{ Number(lapangan.rating).toFixed(1) }}</p>
                         </div>
                     </div>
                     <div class="flex items-center gap-1 mt-1">

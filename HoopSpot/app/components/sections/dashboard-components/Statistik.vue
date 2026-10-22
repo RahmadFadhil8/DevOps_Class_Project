@@ -9,22 +9,11 @@
 </template>
 <script setup lang="ts">
 import type {Statistik} from '~/types'
-const Data: Statistik[] = [
-    {
-        judul: "Total Revenue",
-        jumlah: 125
-    },
-    {
-        judul: "Total Booking",
-        jumlah: 125
-    },
-    {
-        judul: "Active Users",
-        jumlah: 125
-    },
-    {
-        judul: "Active Users",
-        jumlah: 125
-    }
-]
+
+// Endpoint admin: butuh token admin (login sebagai admin@hoopspot.com)
+const api = useApi()
+const { data: Data } = await useAsyncData('admin-stats', () =>
+    api<Statistik[]>('/api/admin/stats'),
+    { default: () => [] }
+)
 </script>

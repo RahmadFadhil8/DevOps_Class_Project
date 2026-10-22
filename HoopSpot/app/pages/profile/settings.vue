@@ -21,7 +21,7 @@
       </div>
 
       <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <ProfileSidebar />
+        <CardsProfileSidebar />
 
         <div class="min-w-0 space-y-6">
           <!-- Profile form -->
@@ -245,13 +245,20 @@
 
 <script setup lang="ts">
 import { reactive, ref, computed } from 'vue'
-import { profileUser } from '~/data/profile'
+import { useApi } from '~/composables/useApi'
+import { useProfile } from '~/composables/useProfile'
+import { pesanError } from '~/utils/pesanError'
+
+definePageMeta({ middleware: 'auth' })
+
+const api = useApi()
+const { user, refresh } = await useProfile()
 
 const form = reactive({
-  nama: profileUser.nama,
-  email: profileUser.email,
-  telepon: profileUser.telepon,
-  lokasi: profileUser.lokasi,
+  nama: user.value.nama,
+  email: user.value.email,
+  telepon: user.value.telepon,
+  lokasi: user.value.lokasi,
 })
 
 const password = reactive({
@@ -274,20 +281,25 @@ const initials = computed(() =>
     .toUpperCase(),
 )
 
-const saveProfile = () => {
-  // Demo frontend: belum menyimpan data ke database.
-  Object.assign(profileUser, {
-    nama: form.nama,
-    email: form.email,
-    telepon: form.telepon,
-    lokasi: form.lokasi,
-  })
-
-  profileMessage.value =
-    'Informasi berhasil diperbarui pada sesi aplikasi ini.'
+const saveProfile = async () => {
+  try {
+    await api('/api/profile', {
+      method: 'PUT',
+      body: {
+        nama: form.nama,
+        email: form.email,
+        telepon: form.telepon,
+        lokasi: form.lokasi,
+      },
+    })
+    await refresh() // muat ulang data profil supaya sidebar ikut berubah
+    profileMessage.value = 'Informasi berhasil diperbarui.'
+  } catch (error) {
+    profileMessage.value = pesanError(error, 'Gagal menyimpan perubahan.')
+  }
 }
 
-const changePassword = () => {
+const changePassword = async () => {
   passwordMessage.value = ''
   passwordError.value = false
 
@@ -298,12 +310,21 @@ const changePassword = () => {
     return
   }
 
-  // Demo saja: jangan mengubah kata sandi secara lokal.
-  passwordMessage.value =
-    'Form valid. Integrasikan endpoint autentikasi untuk memperbarui kata sandi.'
-
-  password.old = ''
-  password.new = ''
-  password.confirm = ''
+  try {
+    await api('/api/profile/password', {
+      method: 'PUT',
+      body: {
+        passwordLama: password.old,
+        passwordBaru: password.new,
+      },
+    })
+    passwordMessage.value = 'Kata sandi berhasil diperbarui.'
+    password.old = ''
+    password.new = ''
+    password.confirm = ''
+  } catch (error) {
+    passwordError.value = true
+    passwordMessage.value = pesanError(error, 'Gagal memperbarui kata sandi.')
+  }
 }
 </script>

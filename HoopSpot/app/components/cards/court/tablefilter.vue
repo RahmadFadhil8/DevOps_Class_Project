@@ -43,7 +43,7 @@
                 </div>
 
                 <div class="mb-1">
-                    <UiButton full>
+                    <UiButton full @click="cari">
                         Cari Sekarang
                     </UiButton>
                 </div>
@@ -56,38 +56,40 @@ import location from '~/assets/icon/location.svg'
 import Calendar from '~/assets/icon/calendar.svg'
 import money from '~/assets/icon/money.svg'
 import basketball from '~/assets/icon/basketball.svg'
+
+// Dikirim ke halaman induk (pages/lapangan/index.vue) saat tombol "Cari Sekarang" ditekan
+const emit = defineEmits<{
+    (e: 'cari', filter: { q: string; tipe: string; hargaMin: string; hargaMax: string }): void
+}>()
+
 const text = ref('')
 const date = ref('')
-const Harga = ref('Semua Harga')
+const Harga = ref('semua')
 const statusLapangan = ref('Semua Tipe')
 
+// value berformat "min-max" (kosong = tanpa batas)
 const HargaOptions = [
-    {
-        label: 'Pending',
-        value: 'Pending'
-    },
-    {
-        label: 'Approved',
-        value: 'Approved'
-    },
-    {
-        label: 'Rejected',
-        value: 'Rejected'
-    }
+    { label: 'Semua Harga', value: 'semua' },
+    { label: 'Di bawah Rp 200.000', value: '-199999' },
+    { label: 'Rp 200.000 - Rp 250.000', value: '200000-250000' },
+    { label: 'Di atas Rp 250.000', value: '250001-' },
 ]
 
 const lapanganOptions = [
-    {
-        label: 'Semua Tipe',
-        value: 'Semua Tipe'
-    },
-    {
-        label: 'Indoor',
-        value: 'Indoor'
-    },
-    {
-        label: 'Outdoor',
-        value: 'Outdoor'
-    },
+    { label: 'Semua Tipe', value: 'Semua Tipe' },
+    { label: 'Indoor', value: 'Indoor' },
+    { label: 'Outdoor', value: 'Outdoor' },
 ]
+
+const cari = () => {
+    const [hargaMin = '', hargaMax = ''] =
+        Harga.value === 'semua' ? [] : Harga.value.split('-')
+
+    emit('cari', {
+        q: text.value.trim(),
+        tipe: statusLapangan.value === 'Semua Tipe' ? '' : statusLapangan.value,
+        hargaMin,
+        hargaMax,
+    })
+}
 </script>

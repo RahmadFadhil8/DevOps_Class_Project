@@ -21,7 +21,7 @@
       </div>
 
       <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <ProfileSidebar />
+        <CardsProfileSidebar />
 
         <section class="min-w-0 space-y-5">
           <!-- Search and filter -->
@@ -73,14 +73,14 @@
           </div>
 
           <div v-if="filteredBookings.length" class="space-y-4">
-            <CardBooking
+            <CardsProfileCardBooking
               v-for="booking in filteredBookings"
               :key="booking.id"
               :booking="booking"
             />
           </div>
 
-          <EmptyState
+          <CardsProfileEmptyState
             v-else
             icon="▤"
             title="Booking tidak ditemukan"
@@ -96,10 +96,19 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { bookingData } from '~/data/profile'
-import type { BookingStatus } from '~/types/profile'
+import { useApi } from '~/composables/useApi'
+import type { Booking, BookingStatus } from '~/types/profile'
+
+definePageMeta({ middleware: 'auth' })
 
 type FilterValue = 'all' | BookingStatus
+
+const api = useApi()
+
+const { data: bookingRes } = await useAsyncData('profile-booking', () =>
+  api<Booking[]>('/api/profile/booking'),
+)
+const bookingData = computed(() => bookingRes.value ?? [])
 
 const search = ref('')
 const activeTab = ref<FilterValue>('all')
@@ -114,7 +123,7 @@ const tabs: { label: string; value: FilterValue }[] = [
 const filteredBookings = computed(() => {
   const keyword = search.value.trim().toLowerCase()
 
-  return [...bookingData]
+  return [...bookingData.value]
     .filter((booking) => {
       const matchesStatus =
         activeTab.value === 'all' ||

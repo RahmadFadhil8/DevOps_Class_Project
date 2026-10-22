@@ -44,7 +44,6 @@
     <div>
       <UiButton v-if="!isLoggedIn">
         <NuxtLink to="/auth/login" class="flex items-center gap-2">
-          <icon name="log-in" size="18" />
           Login
         </NuxtLink>
       </UiButton>
@@ -56,11 +55,12 @@
         title="Profile"
         class="flex h-10 w-10 items-center justify-center rounded-full border border-gray-300 bg-white text-gray-700 transition hover:bg-gray-100 hover:text-hover-primary"
       >
-        <icon name="user-round" size="22" />
+        <img :src="user" alt="Profile Icon" class="h-5 w-5 object-contain" />
       </NuxtLink>
     </div>
   </nav>
 </template>
 <script setup lang="ts">
+import user from '~/assets/icon/user.svg'
 const { isLoggedIn } = useAuth()
 </script>

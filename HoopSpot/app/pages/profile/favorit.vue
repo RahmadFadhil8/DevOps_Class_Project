@@ -21,7 +21,7 @@
       </div>
 
       <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <ProfileSidebar />
+        <CardsProfileSidebar />
 
         <section class="min-w-0">
           <div class="mb-5 flex flex-wrap items-center justify-between gap-3">
@@ -48,7 +48,7 @@
             v-if="favorites.length"
             class="grid grid-cols-1 gap-5 md:grid-cols-2"
           >
-            <CardFavorite
+            <CardsProfileCardFavorite
               v-for="court in favorites"
               :key="court.id"
               :court="court"
@@ -56,7 +56,7 @@
             />
           </div>
 
-          <EmptyState
+          <CardsProfileEmptyState
             v-else
             icon="♡"
             title="Belum Ada Lapangan Favorit"
@@ -72,14 +72,28 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { favoriteData } from '~/data/profile'
+import { useApi } from '~/composables/useApi'
 import type { FavoriteCourt } from '~/types/profile'
+import { pesanError } from '~/utils/pesanError'
 
-const favorites = ref<FavoriteCourt[]>([...favoriteData])
+definePageMeta({ middleware: 'auth' })
 
-const removeFavorite = (id: string) => {
-  favorites.value = favorites.value.filter(
-    (court) => court.id !== id,
-  )
+const api = useApi()
+
+const { data } = await useAsyncData('favorit', () =>
+  api<FavoriteCourt[]>('/api/favorit'),
+)
+const favorites = ref<FavoriteCourt[]>(data.value ?? [])
+
+// Hapus dari database dulu, baru dari tampilan
+const removeFavorite = async (id: string) => {
+  try {
+    await api(`/api/favorit/${id}`, { method: 'DELETE' })
+    favorites.value = favorites.value.filter(
+      (court) => court.id !== id,
+    )
+  } catch (error) {
+    alert(pesanError(error, 'Gagal menghapus favorit.'))
+  }
 }
 </script>

@@ -47,12 +47,16 @@
                     </UiButton>
                 </li>
                 <li>
-                    <UiButton variant="sidebar" full>
-                        <NuxtLink to="/" class="flex gap-2">
-                            <img src="~/assets/icon/logout.svg" alt="" class="h-6 w-6">
-                            Log out
-                        </NuxtLink>
-                    </UiButton>
+                    <button
+                        type="button"
+                        class="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3
+                        text-left text-sm font-medium text-red-600 transition-colors
+                        hover:bg-red-50"
+                        @click="logout"
+                        >
+                        <span class="w-5 text-center">⎋</span>
+                        Keluar
+                    </button>
                 </li>
             </ul>
         </div>
@@ -66,3 +70,6 @@
         </div>
     </div>
 </template>
+<script setup lang="ts">
+const { logout } = useAuth()
+</script>

@@ -1,37 +1,27 @@
 <template>
     <CardsBookingTableDashboard
     :-bookings="DataBooking"
+    @ubah="ubahStatus"
     />
 </template>
 <script setup lang="ts">
 import type { DaftarBooking } from '~/types';
-const DataBooking: DaftarBooking[] = [
-    {
-        user: "Jhon Doe",
-        court: "Court A1",
-        timeSlot: {
-            start: "18:00",
-            end: "19:30"
-        },
-        status:'Pending'
-    },
-    {
-        user: "Jhon",
-        court: "Court A3",
-        timeSlot: {
-            start: "19:00",
-            end: "20:30"
-        },
-        status:'Pending'
-    },
-    {
-        user: "Doe",
-        court: "Court A2",
-        timeSlot: {
-            start: "3:00",
-            end: "12:30"
-        },
-        status:'Pending'
-    },
-]
+
+const api = useApi()
+
+const { data: DataBooking, refresh } = await useAsyncData('admin-booking', () =>
+    api<DaftarBooking[]>('/api/admin/booking', { query: { limit: 10 } }),
+    { default: () => [] }
+)
+
+// Dipanggil saat admin menekan tombol Approve / Reject di tabel
+const ubahStatus = async (id: string, status: 'Approved' | 'Rejected') => {
+    try {
+        await api(`/api/admin/booking/${id}`, { method: 'PATCH', body: { status } })
+        await refresh()
+        await refreshNuxtData(['admin-stats', 'admin-court-status'])
+    } catch (error) {
+        alert(pesanError(error, 'Gagal mengubah status booking.'))
+    }
+}
 </script>

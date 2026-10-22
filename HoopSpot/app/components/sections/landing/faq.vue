@@ -63,24 +63,9 @@ import type { Faq } from '~/types';
 
 const indexActive = ref<number | null>(null);
 
-const DataFaq = ref<Faq[]>([
-    {
-        pertanyaan: "Bagaimana cara melakukan booking lapangan?",
-        jawaban: "Cukup pilih lapangan basket yang Anda inginkan, tentukan tanggal dan jam tayang, pilih metode pembayaran, dan selesaikan transaksi. Setelah berhasil, Anda akan menerima kode booking melalui email dan aplikasi."
-    },
-    {
-        pertanyaan: "Metode pembayaran apa saja yang tersedia?",
-        jawaban: "Kami mendukung berbagai metode pembayaran mulai dari Virtual Account (BCA, Mandiri, BNI), E-Wallet (GoPay, OVO, DANA), hingga kartu kredit."
-    },
-    {
-        pertanyaan: "Apakah saya bisa membatalkan jadwal booking?",
-        jawaban: "Ya, pembatalan dapat dilakukan minimal 24 jam sebelum jadwal pertandingan dimulai. Dana akan dikembalikan ke saldo akun HoopSpot atau rekening asal sesuai dengan kebijakan pengelola lapangan."
-    },
-    {
-        pertanyaan: "Berapa jam operasional layanan HoopSpot?",
-        jawaban: "Platform website dan sistem booking online kami dapat diakses 24/7. Untuk jam operasional fisik masing-masing lapangan basket bervariasi, namun umumnya buka mulai pukul 06:00 hingga 23:00 WIB."
-    },
-])
+const { data: DataFaq } = await useFetch<Faq[]>('/api/faq', {
+    default: () => [],
+})
 
 const TombolFAQ = (index: number) => {
     indexActive.value = indexActive.value === index ? null : index;

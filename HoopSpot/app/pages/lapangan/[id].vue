@@ -36,7 +36,7 @@
               class="h-4 w-4"
             />
             <span class="font-semibold text-slate-800">
-              {{ Data.rating }}
+              {{ Number(Data.rating).toFixed(1) }}
             </span>
             <span>Rating</span>
           </div>
@@ -190,7 +190,8 @@
                     v-for="slot in timeSlots"
                     :key="slot.value"
                     type="button"
-                    class="rounded-xl border px-3 py-3 text-sm font-semibold transition"
+                    :disabled="tidakTersedia.includes(String(slot.value))"
+                    class="rounded-xl border px-3 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-300 disabled:line-through"
                     :class="
                       selectedSlot === String(slot.value)
                         ? 'border-primary bg-primary/5 text-primary ring-1 ring-primary'
@@ -283,27 +284,21 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { DataLapangan } from '~/data/lapangan'
+import { computed, ref, watch } from 'vue'
+import type { Lapangan } from '~/types'
 import { durations, timeSlots } from '~/data/booking'
 
 const route = useRoute()
 const router = useRouter()
 
-const LapanganId = Number(route.params.id)
-
-const Data = DataLapangan.find(
-  (item) => item.id === LapanganId,
+// Data lapangan dari backend (id sekarang string dari MongoDB, jangan diubah jadi Number)
+const { data: Data } = await useFetch<Lapangan>(
+  `/api/lapangan/${route.params.id}`,
 )
 
-// Sesuaikan "harga" jika nama properti harga di datamu berbeda.
-const hargaPerJam = computed(() =>
-  Number(Data?.harga ?? 250000),
-)
+const hargaPerJam = computed(() => Number(Data.value?.harga ?? 0))
 
-const durasi = ref<number>(
-  Number(durations[0]?.value ?? 90),
-)
+const durasi = ref<number>(Number(durations[0]?.value ?? 90))
 
 const selectedDate = ref('')
 const selectedSlot = ref('')
@@ -328,6 +323,27 @@ const today = (() => {
   return `${year}-${month}-${day}`
 })()
 
+// Jam yang sudah dipesan orang lain pada tanggal yang dipilih
+const tidakTersedia = ref<string[]>([])
+
+watch(selectedDate, async (tanggal) => {
+  selectedSlot.value = ''
+  tidakTersedia.value = []
+  if (!tanggal) return
+
+  try {
+    const hasil = await $fetch<{ slots: { jam: string; tersedia: boolean }[] }>(
+      `/api/lapangan/${route.params.id}/availability`,
+      { query: { tanggal } },
+    )
+    tidakTersedia.value = hasil.slots
+      .filter((slot) => !slot.tersedia)
+      .map((slot) => slot.jam)
+  } catch (error) {
+    bookingError.value = pesanError(error, 'Gagal memuat ketersediaan jadwal.')
+  }
+})
+
 const formatCurrency = (value: number) =>
   new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -338,7 +354,7 @@ const formatCurrency = (value: number) =>
 const goToPayment = async () => {
   bookingError.value = ''
 
-  if (!Data) {
+  if (!Data.value) {
     bookingError.value = 'Data lapangan tidak ditemukan.'
     return
   }
@@ -356,7 +372,7 @@ const goToPayment = async () => {
   await router.push({
     path: '/pembayaran',
     query: {
-      lapanganId: String(Data.id),
+      lapanganId: String(Data.value.id),
       tanggal: selectedDate.value,
       durasi: String(durasi.value),
       slot: selectedSlot.value,

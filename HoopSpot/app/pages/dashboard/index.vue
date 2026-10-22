@@ -2,7 +2,8 @@
 import Dashboard from '~/layouts/dashboard.vue';
 
 definePageMeta({
-  layout: 'dashboard'
+  layout: 'dashboard',
+  middleware: 'auth' // harus login (sebagai admin) untuk memuat data dashboard
 })
 </script>
 

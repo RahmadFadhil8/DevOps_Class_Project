@@ -81,13 +81,13 @@
 
 
 <script setup lang="ts">
-definePageMeta({
-  layout: 'auth',
-})
-
 import { ref } from 'vue'
 import emailIcon from '~/assets/icon/email-hitam.svg'
 import passIcon from '~/assets/icon/eye.svg'
+
+definePageMeta({
+  layout: 'auth',
+})
 
 const { login } = useAuth()
 
@@ -101,18 +101,15 @@ const handleLogin = async () => {
   isLoading.value = true
 
   try {
-    await login({
+    const response = await login({
       email: email.value,
       password: password.value,
     })
 
-    await navigateTo('/profile')
-  } catch (error: unknown) {
+    await navigateTo(response.user.role === 'admin' ? '/dashboard' : '/profile')
+  } catch (error: any) {
     const message =
-      error instanceof Error
-        ? error.message
-        : 'Gagal login, silakan coba lagi.'
-
+      error?.data?.message || error?.message || 'Gagal login, silakan coba lagi.'
     alert(message)
   } finally {
     isLoading.value = false

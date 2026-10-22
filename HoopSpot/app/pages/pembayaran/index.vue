@@ -247,7 +247,7 @@
                       alt=""
                       class="h-4 w-4"
                     />
-                    {{ Data.rating }}
+                    {{ Number(Data.rating).toFixed(1) }}
                   </p>
                 </div>
               </div>
@@ -321,15 +321,21 @@
 
 <script setup lang="ts">
 import { computed, ref } from 'vue'
-import { DataLapangan } from '~/data/lapangan'
+import type { Lapangan } from '~/types'
 import emaill from '~/assets/icon/email-hitam.svg'
 import user from '~/assets/icon/user.svg'
 
-const route = useRoute()
+// Halaman ini hanya untuk user yang sudah login
+definePageMeta({ middleware: 'auth' })
 
-const lapanganId = Number(route.query.lapanganId)
-const Data = DataLapangan.find(
-  (item) => item.id === lapanganId,
+const route = useRoute()
+const api = useApi()
+
+// Data lapangan diambil dari backend berdasarkan ?lapanganId=... di URL
+const { data: Data } = await useAsyncData('lapangan-bayar', () =>
+  route.query.lapanganId
+    ? $fetch<Lapangan>(`/api/lapangan/${route.query.lapanganId}`)
+    : Promise.resolve(null),
 )
 
 const tanggal = computed(() =>
@@ -349,9 +355,10 @@ const slot = computed(() =>
     : '',
 )
 
-// Contoh informasi kontak; ganti dengan data pengguna login jika tersedia.
-const nama = ref('')
-const email = ref('')
+// Nama dan email diisi otomatis dari akun yang login (masih bisa diubah)
+const { user: profil } = await useProfile()
+const nama = ref(profil.value.nama)
+const email = ref(profil.value.email)
 const paymentMethod = ref('qris')
 const errorMessage = ref('')
 
@@ -373,7 +380,7 @@ const paymentMethods = [
 ]
 
 const hargaPerJam = computed(() =>
-  Number(Data?.harga ?? 250000),
+  Number(Data.value?.harga ?? 0),
 )
 
 const biayaLayanan = 5000
@@ -409,7 +416,7 @@ const formatDate = (value: string) => {
 const submitPayment = async () => {
   errorMessage.value = ''
 
-  if (!Data || !tanggal.value || !slot.value) {
+  if (!Data.value || !tanggal.value || !slot.value) {
     errorMessage.value =
       'Detail booking tidak lengkap. Silakan pilih ulang lapangan dan jadwal.'
     return
@@ -430,20 +437,27 @@ const submitPayment = async () => {
     return
   }
 
-  // Belum membuat transaksi sungguhan.
-  // Selanjutnya kirim data ke endpoint server untuk validasi,
-  // pengecekan slot, dan pembuatan booking/payment.
-  await navigateTo({
-    path: '/konfirmasi',
-    query: {
-      lapanganId: String(Data.id),
-      tanggal: tanggal.value,
-      durasi: String(durasi.value),
-      slot: slot.value,
-      metode: paymentMethod.value,
-      nama: nama.value.trim(),
-      email: email.value.trim(),
-    },
-  })
+  // Kirim ke backend: server mengecek slot masih kosong lalu menyimpan booking (status Pending)
+  try {
+    const booking = await api<{ id: string }>('/api/booking', {
+      method: 'POST',
+      body: {
+        lapanganId: Data.value.id,
+        tanggal: tanggal.value,
+        slot: slot.value,
+        durasi: durasi.value,
+        nama: nama.value.trim(),
+        email: email.value.trim(),
+        metode: paymentMethod.value,
+      },
+    })
+
+    await navigateTo({
+      path: '/konfirmasi',
+      query: { id: booking.id },
+    })
+  } catch (error) {
+    errorMessage.value = pesanError(error, 'Gagal membuat booking.')
+  }
 }
 </script>

@@ -1,9 +1,10 @@
 type Lapangan = {
-    id:number;
+    id:string;
     gambar:string;
     judul:string;
     alamat:string;
-    rating:string;
+    tipe?:'Indoor' | 'Outdoor';
+    rating:number;
     harga:number;
     deskripsi: string;
     fasilitas: string[];
@@ -32,9 +33,11 @@ type TimeSlot = {
 }
 
 type DaftarBooking = {
+    id?: string;
+    kode?: string;
     user: string;
     court:string;
     timeSlot: TimeSlot;
-    status: "Pending" | "Approved";
+    status: "Pending" | "Approved" | "Rejected" | "Cancelled";
 }
 export type {Lapangan, Testimoni, Faq, Statistik, DaftarBooking}

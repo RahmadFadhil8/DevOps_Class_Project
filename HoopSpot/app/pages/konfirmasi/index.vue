@@ -21,8 +21,24 @@
             </p>
           </div>
 
+          <p v-if="booking" class="text-sm text-gray-500">
+
+
+            Kode booking:
+
+
+            <span class="font-bold text-gray-900">{{ booking.kode }}</span>
+
+
+          </p>
+
+
           <UiBadge>
+
+
             Booking berhasil
+
+
           </UiBadge>
 
           <!-- Informasi lapangan -->
@@ -118,34 +134,40 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
-import { DataLapangan } from '~/data/lapangan'
 import { durations } from '~/data/booking'
 
+definePageMeta({ middleware: 'auth' })
+
 const route = useRoute()
+const api = useApi()
 
-const lapanganId = computed(() => String(route.query.lapanganId ?? ''))
-const tanggal = computed(() => String(route.query.tanggal ?? ''))
-const durasi = computed(() => Number(route.query.durasi ?? 60))
-const slot = computed(() => String(route.query.slot ?? ''))
-const metode = computed(() => String(route.query.metode ?? 'qris'))
+type DetailBooking = {
+  id: string
+  kode: string
+  lapangan: { id: string; judul: string; alamat: string; gambar: string }
+  tanggal: string
+  slot: string
+  jamSelesai: string
+  durasi: number
+  metode: string
+  status: string
+}
 
-const lapangan = computed(() =>
-  DataLapangan.find((item) => String(item.id) === lapanganId.value)
+// Detail booking diambil dari backend berdasarkan ?id=... di URL
+const { data: booking } = await useAsyncData('konfirmasi', () =>
+  api<DetailBooking>(`/api/booking/${route.query.id}`),
 )
 
-const namaLapangan = computed(() => lapangan.value?.judul ?? 'Lapangan')
+const tanggal = computed(() => booking.value?.tanggal ?? '')
+const durasi = computed(() => booking.value?.durasi ?? 60)
+const slot = computed(() => booking.value?.slot ?? '')
+const metode = computed(() => booking.value?.metode ?? 'qris')
+const jamSelesai = computed(() => booking.value?.jamSelesai ?? '')
+
+const namaLapangan = computed(() => booking.value?.lapangan.judul ?? 'Lapangan')
 const durasiLabel = computed(() => {
   const pilihan = durations.find((item) => Number(item.value) === durasi.value)
   return pilihan?.label ?? `${durasi.value} menit`
-})
-
-const jamSelesai = computed(() => {
-  if (!slot.value) return ''
-
-  const [jam, menit] = slot.value.split(':').map(Number)
-  const totalMenit = jam! * 60 + menit! + durasi.value
-
-  return `${String(Math.floor(totalMenit / 60) % 24).padStart(2, '0')}:${String(totalMenit % 60).padStart(2, '0')}`
 })
 
 const tanggalFormatted = computed(() => {
@@ -163,6 +185,7 @@ const tanggalFormatted = computed(() => {
 const metodeLabel = computed(() => {
   const labels: Record<string, string> = {
     qris: 'Digital Payment (QRIS)',
+    va: 'Virtual Account',
     transfer: 'Transfer Bank',
     tunai: 'Pembayaran Tunai',
   }

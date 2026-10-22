@@ -42,7 +42,7 @@
             <!-- TABLE BODY -->
             <tbody>
 
-                <tr v-for="Booking in Bookings" :key="Booking.user" class="border-t border-gray-200">
+                <tr v-for="Booking in Bookings" :key="Booking.id ?? Booking.user" class="border-t border-gray-200">
 
                     <td class="px-6 py-5">
                         {{Booking.user}}
@@ -65,7 +65,23 @@
                     </td>
 
                     <td class="px-6 py-5">
-                        Actions
+                        <div v-if="Booking.status === 'Pending' && Booking.id" class="flex gap-2">
+                            <button
+                                type="button"
+                                class="px-3 py-1 rounded-lg text-xs font-medium bg-green-100 text-green-700 hover:bg-green-200 cursor-pointer"
+                                @click="emit('ubah', Booking.id, 'Approved')"
+                            >
+                                Approve
+                            </button>
+                            <button
+                                type="button"
+                                class="px-3 py-1 rounded-lg text-xs font-medium bg-red-100 text-red-700 hover:bg-red-200 cursor-pointer"
+                                @click="emit('ubah', Booking.id, 'Rejected')"
+                            >
+                                Reject
+                            </button>
+                        </div>
+                        <span v-else class="text-gray-400">-</span>
                     </td>
 
                 </tr>
@@ -80,5 +96,9 @@ import type {DaftarBooking} from '~/types'
 
 defineProps<{
     Bookings:DaftarBooking[]
+}>()
+
+const emit = defineEmits<{
+    (e: 'ubah', id: string, status: 'Approved' | 'Rejected'): void
 }>()
 </script>

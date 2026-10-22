@@ -25,7 +25,7 @@
       </div>
 
       <div class="grid grid-cols-1 items-start gap-6 lg:grid-cols-[280px_minmax(0,1fr)]">
-        <ProfileSidebar />
+        <CardsProfileSidebar />
 
         <div class="min-w-0 space-y-6">
           <!-- Welcome Card -->
@@ -67,19 +67,19 @@
 
           <!-- Statistics -->
           <section class="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <ProfileCardStat
+            <CardsProfileCardStat
               label="Total Booking"
               :value="bookingData.length"
               icon="▤"
               description="Seluruh aktivitas booking"
             />
-            <ProfileCardStat
+            <CardsProfileCardStat
               label="Akan Datang"
               :value="upcomingCount"
               icon="◷"
               description="Jadwal yang akan berlangsung"
             />
-            <ProfileCardStat
+            <CardsProfileCardStat
               label="Lapangan Favorit"
               :value="favoriteData.length"
               icon="♡"
@@ -160,7 +160,7 @@
               </NuxtLink>
             </div>
 
-            <CardBooking
+            <CardsProfileCardBooking
               v-for="booking in recentBookings"
               :key="booking.id"
               :booking="booking"
@@ -173,20 +173,32 @@
 </template>
 
 <script setup lang="ts">
-import {
-  profileUser,
-  bookingData,
-  favoriteData,
-} from '~/data/profile'
+import { useApi } from '~/composables/useApi'
+import { useProfile } from '~/composables/useProfile'
+import type { Booking, FavoriteCourt } from '~/types/profile'
 
-const user = profileUser
+definePageMeta({ middleware: 'auth' })
+
+const api = useApi()
+
+const { user } = await useProfile()
+
+const { data: bookingRes } = await useAsyncData('profile-booking', () =>
+  api<Booking[]>('/api/profile/booking'),
+)
+const { data: favoriteRes } = await useAsyncData('favorit', () =>
+  api<FavoriteCourt[]>('/api/favorit'),
+)
+
+const bookingData = computed(() => bookingRes.value ?? [])
+const favoriteData = computed(() => favoriteRes.value ?? [])
 
 const upcomingCount = computed(
-  () => bookingData.filter((item) => item.status === 'upcoming').length,
+  () => bookingData.value.filter((item) => item.status === 'upcoming').length,
 )
 
 const recentBookings = computed(() =>
-  [...bookingData]
+  [...bookingData.value]
     .sort((a, b) => b.tanggal.localeCompare(a.tanggal))
     .slice(0, 2),
 )

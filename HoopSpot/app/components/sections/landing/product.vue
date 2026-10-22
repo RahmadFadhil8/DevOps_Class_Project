@@ -23,6 +23,12 @@
 </template>
 
 <script setup lang="ts">
-import {DataLapangan} from '~/data/lapangan';
-const Data = DataLapangan
+import type { Lapangan } from '~/types'
+
+const { data: semua } = await useFetch<Lapangan[]>('/api/lapangan', {
+    default: () => [],
+})
+
+// Landing page cukup menampilkan 4 lapangan terpopuler (urut rating tertinggi)
+const Data = computed(() => semua.value.slice(0, 4))
 </script>

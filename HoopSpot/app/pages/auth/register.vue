@@ -81,7 +81,7 @@
                 <span class="text-secondary font-semibold">
                   Kebijakan Privasi
                 </span>
-                Padel.
+                HoopSpot.
               </label>
             </div>
 
@@ -119,16 +119,16 @@
 
 
 <script setup lang="ts">
-definePageMeta({
-  layout: 'auth',
-})
-
 import { reactive, ref } from 'vue'
 import emailIcon from '~/assets/icon/email-hitam.svg'
 import passIcon from '~/assets/icon/eye.svg'
 import namaIcon from '~/assets/icon/user.svg'
 import telIcon from '~/assets/icon/phoneHitam.svg'
 import type { RegisterDto } from '~/types/auth'
+
+definePageMeta({
+  layout: 'auth',
+})
 
 const { register } = useAuth()
 
@@ -157,12 +157,9 @@ const handleRegister = async () => {
 
     alert('Registrasi berhasil! Silakan login.')
     await navigateTo('/auth/login')
-  } catch (error: unknown) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : 'Gagal mendaftar, silakan coba lagi.'
-
+  } catch (error: any) {
+    // Ambil pesan error dari respons backend (jika ada)
+    const message = error?.data?.message || error?.message || 'Gagal mendaftar, silakan coba lagi.'
     alert(message)
   } finally {
     isLoading.value = false

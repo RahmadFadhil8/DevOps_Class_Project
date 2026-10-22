@@ -48,6 +48,17 @@
           <span class="w-5 text-center">{{ item.icon }}</span>
           {{ item.label }}
         </NuxtLink>
+
+        <button
+          type="button"
+          class="flex shrink-0 items-center gap-3 rounded-xl px-4 py-3
+          text-left text-sm font-medium text-red-600 transition-colors
+          hover:bg-red-50"
+          @click="logout"
+        >
+          <span class="w-5 text-center">⎋</span>
+          Keluar
+        </button>
       </nav>
     </div>
 
@@ -68,13 +79,12 @@
 </template>
 
 <script setup lang="ts">
-import { profileUser } from '~/data/profile'
-
 const route = useRoute()
-const user = profileUser
+const { logout } = useAuth()
+const { user } = await useProfile()
 
 const initials = computed(() =>
-  user.nama
+  user.value.nama
     .split(' ')
     .map((word) => word[0])
     .slice(0, 2)

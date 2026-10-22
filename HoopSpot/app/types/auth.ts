@@ -15,10 +15,11 @@ export interface AuthUser {
   nama: string
   email: string
   tel?: string
+  role?:'user' | 'admin'
 }
 
 export interface LoginResponse {
   user: AuthUser
   message?: string
-  token?: string
+  token: string
 }
