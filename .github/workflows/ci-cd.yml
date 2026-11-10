@@ -33,7 +33,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./HoopSpot-backend
-        run: npm ci
+        run: npm install
 
       - name: Run Backend Unit Tests
         working-directory: ./HoopSpot-backend
@@ -58,7 +58,7 @@ jobs:
 
       - name: Install Dependencies
         working-directory: ./HoopSpot
-        run: npm ci
+        run: npm install
 
       - name: Build Nuxt Application
         working-directory: ./HoopSpot
@@ -72,6 +72,9 @@ jobs:
     runs-on: ubuntu-latest
     needs: [test-backend, build-frontend]
     if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    env:
+      DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+      DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
 
     steps:
       - name: Checkout Code
@@ -83,20 +86,21 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Login ke Docker Hub jika secret tersedia
       - name: Login to Docker Hub
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        if: env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != ''
         uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
+          username: ${{ env.DOCKERHUB_USERNAME }}
+          password: ${{ env.DOCKERHUB_TOKEN }}
 
       # Extract metadata untuk Backend Image
       - name: Extract Docker metadata (Backend)
         id: meta-backend
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        if: env.DOCKERHUB_USERNAME != ''
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/hoopspot-backend
+          images: ${{ env.DOCKERHUB_USERNAME }}/hoopspot-backend
           tags: |
             type=raw,value=latest
             type=sha,format=short
@@ -107,17 +111,17 @@ jobs:
         with:
           context: ./HoopSpot-backend
           file: ./HoopSpot-backend/Dockerfile
-          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+          push: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
           tags: ${{ steps.meta-backend.outputs.tags || 'hoopspot-backend:latest' }}
           labels: ${{ steps.meta-backend.outputs.labels }}
 
       # Extract metadata untuk Frontend Image
       - name: Extract Docker metadata (Frontend)
         id: meta-frontend
-        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        if: env.DOCKERHUB_USERNAME != ''
         uses: docker/metadata-action@v5
         with:
-          images: ${{ secrets.DOCKERHUB_USERNAME }}/hoopspot-frontend
+          images: ${{ env.DOCKERHUB_USERNAME }}/hoopspot-frontend
           tags: |
             type=raw,value=latest
             type=sha,format=short
@@ -130,7 +134,6 @@ jobs:
           file: ./HoopSpot/Dockerfile
           build-args: |
             BACKEND_URL=http://backend:4000
-          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+          push: ${{ env.DOCKERHUB_USERNAME != '' && env.DOCKERHUB_TOKEN != '' }}
           tags: ${{ steps.meta-frontend.outputs.tags || 'hoopspot-frontend:latest' }}
           labels: ${{ steps.meta-frontend.outputs.labels }}
-
