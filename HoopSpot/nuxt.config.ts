@@ -1,6 +1,8 @@
 // https://nuxt.com/docs/api/configuration/nuxt-config
 import tailwindcss from '@tailwindcss/vite'
 
+const backendUrl = process.env.BACKEND_URL || 'http://127.0.0.1:4000'
+
 export default defineNuxtConfig({
   vite: {
     plugins: [tailwindcss()],
@@ -12,6 +14,7 @@ export default defineNuxtConfig({
   // Semua request ke /api/... di frontend diteruskan ke server Express (port 4000).
   // Jadi $fetch('/api/auth/login') yang sudah ada di kodemu langsung jalan, tanpa urusan CORS.
   routeRules: {
-    '/api/**': { proxy: 'http://127.0.0.1:4000/api/**' },
+    '/api/**': { proxy: `${backendUrl}/api/**` },
   },
 })
+

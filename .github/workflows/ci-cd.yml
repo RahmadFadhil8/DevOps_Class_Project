@@ -1,0 +1,136 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - master
+      - HoopSpot
+  pull_request:
+    branches:
+      - main
+      - master
+      - HoopSpot
+  workflow_dispatch:
+
+jobs:
+  # ==========================================
+  # 1. CI: BACKEND (Test & Lint)
+  # ==========================================
+  test-backend:
+    name: Backend Test & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: HoopSpot-backend/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./HoopSpot-backend
+        run: npm ci
+
+      - name: Run Backend Unit Tests
+        working-directory: ./HoopSpot-backend
+        run: npm test
+
+  # ==========================================
+  # 2. CI: FRONTEND (Nuxt Build Check)
+  # ==========================================
+  build-frontend:
+    name: Frontend Build Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+          cache-dependency-path: HoopSpot/package-lock.json
+
+      - name: Install Dependencies
+        working-directory: ./HoopSpot
+        run: npm ci
+
+      - name: Build Nuxt Application
+        working-directory: ./HoopSpot
+        run: npm run build
+
+  # ==========================================
+  # 3. CD: BUILD & PUSH DOCKER IMAGES
+  # ==========================================
+  docker-publish:
+    name: Build & Push Docker Images
+    runs-on: ubuntu-latest
+    needs: [test-backend, build-frontend]
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      # Extract metadata untuk Backend Image
+      - name: Extract Docker metadata (Backend)
+        id: meta-backend
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/hoopspot-backend
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      # Build & Push Backend
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./HoopSpot-backend
+          file: ./HoopSpot-backend/Dockerfile
+          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+          tags: ${{ steps.meta-backend.outputs.tags || 'hoopspot-backend:latest' }}
+          labels: ${{ steps.meta-backend.outputs.labels }}
+
+      # Extract metadata untuk Frontend Image
+      - name: Extract Docker metadata (Frontend)
+        id: meta-frontend
+        if: ${{ secrets.DOCKERHUB_USERNAME != '' }}
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ secrets.DOCKERHUB_USERNAME }}/hoopspot-frontend
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      # Build & Push Frontend
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./HoopSpot
+          file: ./HoopSpot/Dockerfile
+          build-args: |
+            BACKEND_URL=http://backend:4000
+          push: ${{ secrets.DOCKERHUB_USERNAME != '' && secrets.DOCKERHUB_TOKEN != '' }}
+          tags: ${{ steps.meta-frontend.outputs.tags || 'hoopspot-frontend:latest' }}
+          labels: ${{ steps.meta-frontend.outputs.labels }}
+

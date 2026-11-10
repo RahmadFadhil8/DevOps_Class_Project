@@ -1,0 +1,66 @@
+services:
+  mongodb:
+    image: mongo:7.0
+    container_name: hoopspot-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - hoopspot-network
+
+  backend:
+    build:
+      context: ./HoopSpot-backend
+      dockerfile: Dockerfile
+    container_name: hoopspot-backend
+    restart: unless-stopped
+    ports:
+      - "4000:4000"
+    environment:
+      PORT: 4000
+      MONGODB_URI: mongodb://mongodb:27017/hoopspot
+      JWT_SECRET: hoopspot_secret_jwt_key_2026_devops
+      CLIENT_URL: http://localhost:3000
+      AUTO_SEED: "true" # Otomatis isi dummy data saat container pertama kali start
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - hoopspot-network
+
+  frontend:
+    build:
+      context: ./HoopSpot
+      dockerfile: Dockerfile
+      args:
+        BACKEND_URL: http://backend:4000
+    container_name: hoopspot-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      HOST: 0.0.0.0
+      BACKEND_URL: http://backend:4000
+    depends_on:
+      - backend
+    networks:
+      - hoopspot-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  hoopspot-network:
+    driver: bridge
+
