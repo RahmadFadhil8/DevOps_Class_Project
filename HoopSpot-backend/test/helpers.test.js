@@ -1,6 +1,6 @@
 const test = require('node:test')
 const assert = require('node:assert')
-const { hitungHarga, hitungJamSelesai, tanggalValid, emailValid } = require('../helpers')
+const { hitungHarga, hitungJamSelesai, tanggalValid, emailValid, STATUS_AKTIF } = require('../helpers')
 
 test('hitungHarga harus menghitung sewa dan total biaya dengan benar', () => {
   const result = hitungHarga(300000, 90)
@@ -26,4 +26,12 @@ test('emailValid harus mengenali format email valid dan invalid', () => {
   assert.strictEqual(emailValid('rahmad-tanpa-domain'), false)
   assert.strictEqual(emailValid(''), false)
 })
+
+test('STATUS_AKTIF harus memuat Menunggu Pembayaran, Pending, Approved dan tidak memuat Cancelled', () => {
+  assert.strictEqual(STATUS_AKTIF.includes('Menunggu Pembayaran'), true)
+  assert.strictEqual(STATUS_AKTIF.includes('Pending'), true)
+  assert.strictEqual(STATUS_AKTIF.includes('Approved'), true)
+  assert.strictEqual(STATUS_AKTIF.includes('Cancelled'), false)
+})
+
 

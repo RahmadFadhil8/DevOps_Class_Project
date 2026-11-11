@@ -8,7 +8,11 @@ services:
     volumes:
       - mongodb_data:/data/db
     healthcheck:
-      test: ["CMD-SHELL", "echo 'db.runCommand(\"ping\").ok' | mongosh localhost:27017/test --quiet"]
+      test:
+        [
+          "CMD-SHELL",
+          'echo ''db.runCommand("ping").ok'' | mongosh localhost:27017/test --quiet',
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -30,6 +34,22 @@ services:
       JWT_SECRET: hoopspot_secret_jwt_key_2026_devops
       CLIENT_URL: http://localhost:3000
       AUTO_SEED: "true" # Otomatis isi dummy data saat container pertama kali start
+      PAYMENT_TIMEOUT_SECONDS: "10"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - hoopspot-network
+
+  worker:
+    build:
+      context: ./HoopSpot-worker
+      dockerfile: Dockerfile
+    container_name: hoopspot-worker
+    restart: unless-stopped
+    environment:
+      MONGODB_URI: mongodb://mongodb:27017/hoopspot
+      CHECK_INTERVAL_MS: 1000
     depends_on:
       mongodb:
         condition: service_healthy
@@ -63,4 +83,3 @@ volumes:
 networks:
   hoopspot-network:
     driver: bridge
-

@@ -24,6 +24,10 @@ function dataProfile(user) {
 // Frontend profile hanya mengenal 3 status: upcoming, completed, cancelled
 function statusProfile(booking) {
   if (booking.status === 'Cancelled' || booking.status === 'Rejected') return 'cancelled'
+  if (booking.status === 'Menunggu Pembayaran') {
+    if (booking.batasPembayaran && new Date() > booking.batasPembayaran) return 'cancelled'
+    return 'upcoming'
+  }
   const sudahLewat = waktuMulai(booking.tanggal, booking.jamMulai) < new Date()
   return sudahLewat ? 'completed' : 'upcoming'
 }

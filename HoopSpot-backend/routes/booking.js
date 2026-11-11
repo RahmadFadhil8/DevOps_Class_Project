@@ -58,6 +58,10 @@ router.post('/', async (req, res) => {
     return res.status(409).json({ message: 'Slot ini sudah dipesan. Silakan pilih jam lain.' })
   }
 
+  // Waktu batas pembayaran (default 10 detik sesuai kebutuhan pengujian worker)
+  const timeoutSeconds = Number(process.env.PAYMENT_TIMEOUT_SECONDS) || 10
+  const batasPembayaran = new Date(Date.now() + timeoutSeconds * 1000)
+
   // ---- simpan ----
   const booking = await Booking.create({
     kode: await buatKode(),
@@ -70,6 +74,8 @@ router.post('/', async (req, res) => {
     email: email.trim(),
     metode,
     harga: hitungHarga(lapangan.harga, Number(durasi)),
+    status: 'Menunggu Pembayaran',
+    batasPembayaran,
   })
 
   await booking.populate('lapangan')
@@ -86,7 +92,43 @@ router.get('/:id', async (req, res) => {
     return res.status(404).json({ message: 'Booking tidak ditemukan' })
   }
 
+  // Jika masih menunggu pembayaran dan waktu sudah lewat, ubah ke Cancelled
+  if (booking.status === 'Menunggu Pembayaran' && booking.batasPembayaran && new Date() > booking.batasPembayaran) {
+    booking.status = 'Cancelled'
+    await booking.save()
+  }
+
   res.json(dataBooking(booking))
+})
+
+// POST /api/booking/:id/bayar  -> konfirmasi tombol "Saya sudah bayar"
+router.post('/:id/bayar', async (req, res) => {
+  const booking = await Booking.findOne({ _id: req.params.id, user: req.user._id }).populate('lapangan')
+  if (!booking) return res.status(404).json({ message: 'Booking tidak ditemukan' })
+
+  if (booking.status === 'Cancelled') {
+    return res.status(400).json({ message: 'Batas waktu pembayaran telah habis dan booking telah dibatalkan otomatis.' })
+  }
+
+  if (booking.status !== 'Menunggu Pembayaran') {
+    return res.status(400).json({ message: `Booking berstatus ${booking.status} tidak dalam status menunggu pembayaran.` })
+  }
+
+  // Cek apakah sudah kadaluarsa saat tombol diklik
+  if (booking.batasPembayaran && new Date() > booking.batasPembayaran) {
+    booking.status = 'Cancelled'
+    await booking.save()
+    return res.status(400).json({ message: 'Batas waktu pembayaran telah habis. Booking telah dibatalkan otomatis.' })
+  }
+
+  // Pembayaran berhasil diselesaikan
+  booking.status = 'Approved'
+  await booking.save()
+
+  res.json({
+    message: 'Pembayaran berhasil dikonfirmasi',
+    booking: dataBooking(booking),
+  })
 })
 
 // PATCH /api/booking/:id/batal  -> batalkan booking (minimal 24 jam sebelum main, sesuai FAQ)

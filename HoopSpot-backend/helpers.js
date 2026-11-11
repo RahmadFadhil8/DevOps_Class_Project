@@ -5,7 +5,7 @@ const SLOTS = ['08:00', '10:00', '13:00', '16:00', '19:00', '21:00']
 const DURASI = [60, 90, 120] // menit
 const METODE = ['qris', 'va', 'transfer', 'tunai']
 const BIAYA_LAYANAN = 5000
-const STATUS_AKTIF = ['Pending', 'Approved'] // status yang "memakai" slot
+const STATUS_AKTIF = ['Menunggu Pembayaran', 'Pending', 'Approved'] // status yang "memakai" slot
 
 // Harga lapangan itu PER JAM. Contoh: 300.000 x 90 menit = 450.000
 function hitungHarga(hargaPerJam, durasiMenit) {
@@ -69,6 +69,8 @@ function dataBooking(b) {
     email: b.email,
     harga: b.harga,
     status: b.status,
+    batasPembayaran: b.batasPembayaran,
+    createdAt: b.createdAt,
   }
 }
 

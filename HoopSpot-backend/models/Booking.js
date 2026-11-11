@@ -22,12 +22,16 @@ const bookingSchema = new mongoose.Schema(
       total: Number,
     },
 
-    // Pending = menunggu verifikasi admin, Approved = disetujui,
-    // Rejected = ditolak admin, Cancelled = dibatalkan user
+    // Menunggu Pembayaran = menunggu penyelesaian pembayaran user,
+    // Pending = menunggu verifikasi admin, Approved = disetujui / lunas,
+    // Rejected = ditolak admin, Cancelled = dibatalkan user / otomatis oleh worker
     status: {
       type: String,
-      enum: ['Pending', 'Approved', 'Rejected', 'Cancelled'],
-      default: 'Pending',
+      enum: ['Menunggu Pembayaran', 'Pending', 'Approved', 'Rejected', 'Cancelled'],
+      default: 'Menunggu Pembayaran',
+    },
+    batasPembayaran: {
+      type: Date,
     },
   },
   { timestamps: true, collection: 'bookings' }

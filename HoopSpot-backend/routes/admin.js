@@ -21,7 +21,7 @@ router.get('/stats', async (req, res) => {
     { judul: 'Total Revenue', jumlah: pendapatan },
     { judul: 'Total Booking', jumlah: disetujui.length },
     { judul: 'Active Users', jumlah: await User.countDocuments({ role: 'user' }) },
-    { judul: 'Pending Requests', jumlah: await Booking.countDocuments({ status: 'Pending' }) },
+    { judul: 'Pending Requests', jumlah: await Booking.countDocuments({ status: { $in: ['Pending', 'Menunggu Pembayaran'] } }) },
   ])
 })
 
