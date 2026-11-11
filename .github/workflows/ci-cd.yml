@@ -15,7 +15,7 @@ on:
 
 jobs:
   # ==========================================
-  # 1. CI: BACKEND (Test & Lint)
+  # 1. CI: BACKEND TEST
   # ==========================================
   test-backend:
     name: Backend Test & Lint
