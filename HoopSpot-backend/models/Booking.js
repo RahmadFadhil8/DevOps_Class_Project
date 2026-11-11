@@ -1,6 +1,8 @@
 const mongoose = require('mongoose')
 const ubahJSON = require('./ubahJSON')
 
+// Hello
+
 const bookingSchema = new mongoose.Schema(
   {
     kode: { type: String, required: true, unique: true }, // contoh: HPS-2026-001
